@@ -1,7 +1,7 @@
 <template>
     <div class="body">
         <van-nav-bar
-            title="我的打卡生涯"
+            title="好友打卡生涯"
             left-arrow
             @click-left="backmyf"
         />

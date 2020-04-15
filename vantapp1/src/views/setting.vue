@@ -16,14 +16,12 @@
          </template>
           </van-card>
         </div>
-    <div class="setcenter"> 
-        <van-cell title="账户中心" icon="setting" is-link />
-    </div>
+    
+     <van-cell title="账户中心" icon="setting" is-link />
+    
     <van-cell title="我的赞" icon="good-job" is-link />
-    <van-cell title="我的搁置" icon="browsing-history" is-link />
     <van-cell title="消息盒子" icon="comment-circle" is-link />
-    <van-cell title="专注模式" icon="underway" is-link />
-    <van-cell title="我的好友" icon="friends" is-link />
+    <van-cell title="我的好友" icon="friends" is-link to="MyF" />
     </div>
   </div>
 </template>

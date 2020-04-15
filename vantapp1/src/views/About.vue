@@ -36,7 +36,7 @@
   height: 100%;
   background-image: url("../assets/1.png");
   background-position: 0;
-  background-size: 100%;
+  background-size: 100% auto;
   background-repeat: no-repeat;
 }
 .lb_2 {
@@ -44,7 +44,7 @@
   height: 100%;
   background-image: url("../assets/2.png");
   background-position: 0;
-  background-size: 100%;
+  background-size: 100% auto;
   background-repeat: no-repeat;
 }
 .lb_3 {
@@ -52,7 +52,7 @@
   height: 100%;
   background-image: url("../assets/3.png");
   background-position: 0;
-  background-size: 100%;
+  background-size: 100% auto;
   background-repeat: no-repeat;
 }
 .lb_4 {
@@ -60,7 +60,7 @@
   height: 100%;
   background-image: url("../assets/4.png");
   background-position: 0;
-  background-size: 100%;
+  background-size: 100% auto;
   background-repeat: no-repeat;
 }
 </style>

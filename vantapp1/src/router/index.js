@@ -12,6 +12,13 @@ import mylcView from '../views/mylc.vue'
 import settingView from '../views/setting.vue'
 import goodView from '../views/good.vue'
 import timedownView from '../views/timedown.vue'
+import addView from '../views/add.vue'
+import MyFView from '../views/MyF.vue'
+import AddFView from '../views/AddF.vue'
+import FPlanView from '../views/FPlan.vue'
+import DetailsView from '../views/Details.vue'
+import PlanQView from '../views/PlanQ.vue'
+
 Vue.use(VueRouter)
 
 const routes = [
@@ -41,7 +48,8 @@ const routes = [
   },
   {
     path:"/max",
-    component:maxView
+    component:maxView,
+    meta:{keepAlive: true}
   },
   {
     path:"/lunbo",
@@ -49,11 +57,12 @@ const routes = [
   },
   {
     path:"/longitem",
-    component:longitemView
+    component:longitemView,
+    meta:{keepAlive: true}
   },
   {
     path:"/test",
-    component:testView
+    component:testView,
   },
   {
     path:"/mylc",
@@ -71,10 +80,35 @@ const routes = [
     path:"/timedown",
     component:timedownView
   },
+  {
+    path:"/add",
+    component:addView,
+  },
+  {
+    path:"/MyF",
+    component:MyFView,
+  },
+  {
+    path:"/AddF",
+    component:AddFView,
+  },
+  {
+    path:"/FPlan",
+    component:FPlanView,
+  },
+  {
+    path:"/Details",
+    component:DetailsView,
+  },
+  {
+    path:"/PlanQ",
+    component:PlanQView,
+  },
+
 ]
 
 const router = new VueRouter({
-  mode: 'history',//hash
+  mode: 'hash',//打包用hash 测试用history
   base: process.env.BASE_URL,
   routes
 })
