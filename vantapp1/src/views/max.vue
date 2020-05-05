@@ -1,23 +1,258 @@
 <template>
   <div>
     <div>
+      <!-- 底部tabbar标签栏 -->
       <router-view />
       <van-tabbar route>
-        <van-tabbar-item replace to="/max" icon="home-o">短期</van-tabbar-item>
-        <van-tabbar-item replace to="/longitem" icon="label">长期</van-tabbar-item>
+        <van-tabbar-item replace to="/test" icon="completed">今日待办</van-tabbar-item>
+        <van-tabbar-item replace to="/max" icon="home-o">预约待办</van-tabbar-item>
+        <van-tabbar-item replace to="/longitem" icon="label">长期待办</van-tabbar-item>
       </van-tabbar>
     </div>
-    <div class="nav_sty">
-      <van-nav-bar title="短期">
-        <!--左上弹出-->
+    <!-- 添加计划弹出层 -->
+    <van-popup v-model="showright" position="right" :style="{ height: '100%',width:'100%' }">
+      <van-nav-bar title="添加计划" @click-left="outadd" @click-right="addplan">
         <template #left>
-          <van-icon name="wap-home" @click="showLeft" />
+          <van-icon name="cross" size="30px" />
+        </template>
+        <template #right>
+          <van-icon name="success" size="30px" />
+        </template>
+      </van-nav-bar>
+      <div>
+        <!-- 计划标题 -->
+        <van-cell-group>
+          <van-field v-model="valuename" placeholder="请输入计划标题" />
+        </van-cell-group>
+        <!-- 全天计划 -->
+        <van-cell title="全天计划">
+          <template #default>
+            <van-switch v-model="checked" size="24px" @change="QTchange" />
+          </template>
+        </van-cell>
+        <!-- 非全天计划开始结束显示 -->
+        <div v-if="Fqt_show">
+          <!-- 开始时间 -->
+          <van-cell title="开始时间" is-link :value="this.BeginTimeValue" @click="BeginChoiceTime"></van-cell>
+          <!-- 结束时间 -->
+          <van-cell title="结束时间" is-link :value="this.EndTimeValue" @click="EndChoiceTime"></van-cell>
+        </div>
+
+        <!-- 全天计划开始结束显示 -->
+        <div v-if="Qt_show">
+          <!-- 开始时间 -->
+          <van-cell title="开始时间" is-link :value="this.BeginTimeValue" @click="BeginChoiceTime"></van-cell>
+          <!-- 结束时间 -->
+          <van-cell title="结束时间" is-link :value="this.EndTimeValue" @click="EndChoiceTime"></van-cell>
+        </div>
+
+        <!-- 重复 -->
+        <van-cell title="重复" is-link :value="this.CF_choice" @click="CFChoice"></van-cell>
+        <!-- 重复弹出层 -->
+        <van-popup v-model="CFshow" round position="bottom" :style="{ height: '25%' }">
+          <van-cell title="一次性计划" @click="show1_choice">
+            <template #icon v-if="show1">
+              <van-icon name="arrow" size="20px" />
+            </template>
+          </van-cell>
+          <van-cell title="每天" @click="show2_choice">
+            <template #icon v-if="show2">
+              <van-icon name="arrow" size="20px" />
+            </template>
+          </van-cell>
+          <van-cell title="每周(周一至周五)" @click="show3_choice">
+            <template #icon v-if="show3">
+              <van-icon name="arrow" size="20px" />
+            </template>
+          </van-cell>
+        </van-popup>
+
+        <!-- 弹出层非全天计划的时间选择 -->
+        <van-popup v-model="showFQT" round position="bottom" :style="{ height: '40%' }">
+          <div class="textcenter">
+            <h4>{{this.text_name}}</h4>
+            <header>{{this.timeValue}}</header>
+          </div>
+          <van-datetime-picker
+            v-model="currentDate"
+            type="datetime"
+            :min-date="minDate"
+            :max-date="maxDate"
+            visible-item-count="3"
+            :show-toolbar="false"
+            :formatter="formatter"
+            @change="confirmPicker"
+          />
+          <van-row type="flex" justify="space-around">
+            <van-col span="9">
+              <van-button round plain type="info" size="large" @click="showFQT=false">取消</van-button>
+            </van-col>
+            <van-col span="9">
+              <van-button round plain type="info" size="large" @click="confirmTime">确定</van-button>
+            </van-col>
+          </van-row>
+        </van-popup>
+
+        <!-- 弹出层全天计划的时间选择 -->
+        <van-popup v-model="showQT" round position="bottom" :style="{ height: '40%' }">
+          <div class="textcenter">
+            <h4>{{this.text_name}}</h4>
+            <header>{{this.timeValue}}</header>
+          </div>
+          <van-datetime-picker
+            v-model="currentDate"
+            type="date"
+            :min-date="minDate"
+            :max-date="maxDate"
+            visible-item-count="3"
+            :show-toolbar="false"
+            :formatter="formatter"
+            @change="QT_confirmPicker"
+          />
+
+          <van-row type="flex" justify="space-around">
+            <van-col span="9">
+              <van-button round plain type="info" size="large" @click="showQT=false">取消</van-button>
+            </van-col>
+            <van-col span="9">
+              <van-button round plain type="info" size="large" @click="confirmTime">确定</van-button>
+            </van-col>
+          </van-row>
+        </van-popup>
+      </div>
+    </van-popup>
+
+    <!-- 修改计划弹出层 -->
+    <van-popup v-model="showchange_plan" position="right" :style="{ height: '100%',width:'100%' }">
+      <van-nav-bar title="修改计划" @click-left="outadd" @click-right="changeplan">
+        <template #left>
+          <van-icon name="cross" size="30px" />
+        </template>
+        <template #right>
+          <van-icon name="success" size="30px" />
+        </template>
+      </van-nav-bar>
+      <div>
+        <!-- 计划标题 -->
+        <van-cell-group>
+          <van-field v-model="valuename" placeholder="请输入计划标题" />
+        </van-cell-group>
+        <!-- 全天计划 -->
+        <van-cell title="全天计划">
+          <template #default>
+            <van-switch v-model="checked" size="24px" @change="QTchange" />
+          </template>
+        </van-cell>
+        <!-- 非全天计划开始结束显示 -->
+        <div v-if="Fqt_show">
+          <!-- 开始时间 -->
+          <van-cell title="开始时间" is-link :value="this.BeginTimeValue" @click="BeginChoiceTime"></van-cell>
+          <!-- 结束时间 -->
+          <van-cell title="结束时间" is-link :value="this.EndTimeValue" @click="EndChoiceTime"></van-cell>
+        </div>
+
+        <!-- 全天计划开始结束显示 -->
+        <div v-if="Qt_show">
+          <!-- 开始时间 -->
+          <van-cell title="开始时间" is-link :value="this.BeginTimeValue" @click="BeginChoiceTime"></van-cell>
+          <!-- 结束时间 -->
+          <van-cell title="结束时间" is-link :value="this.EndTimeValue" @click="EndChoiceTime"></van-cell>
+        </div>
+
+        <!-- 重复 -->
+        <van-cell title="重复" is-link :value="this.CF_choice" @click="CFChoice"></van-cell>
+        <!-- 重复弹出层 -->
+        <van-popup v-model="CFshow" round position="bottom" :style="{ height: '25%' }">
+          <van-cell title="一次性计划" @click="show1_choice">
+            <template #icon v-if="show1">
+              <van-icon name="arrow" size="20px" />
+            </template>
+          </van-cell>
+          <van-cell title="每天" @click="show2_choice">
+            <template #icon v-if="show2">
+              <van-icon name="arrow" size="20px" />
+            </template>
+          </van-cell>
+          <van-cell title="每周(周一至周五)" @click="show3_choice">
+            <template #icon v-if="show3">
+              <van-icon name="arrow" size="20px" />
+            </template>
+          </van-cell>
+        </van-popup>
+
+        <!-- 弹出层非全天计划的时间选择 -->
+        <van-popup v-model="showFQT" round position="bottom" :style="{ height: '40%' }">
+          <div class="textcenter">
+            <h4>{{this.text_name}}</h4>
+            <header>{{this.timeValue}}</header>
+          </div>
+          <van-datetime-picker
+            v-model="currentDate"
+            type="datetime"
+            :min-date="minDate"
+            :max-date="maxDate"
+            visible-item-count="3"
+            :show-toolbar="false"
+            :formatter="formatter"
+            @change="confirmPicker"
+          />
+          <van-row type="flex" justify="space-around">
+            <van-col span="9">
+              <van-button round plain type="info" size="large" @click="showFQT=false">取消</van-button>
+            </van-col>
+            <van-col span="9">
+              <van-button round plain type="info" size="large" @click="confirmTime">确定</van-button>
+            </van-col>
+          </van-row>
+        </van-popup>
+
+        <!-- 弹出层全天计划的时间选择 -->
+        <van-popup v-model="showQT" round position="bottom" :style="{ height: '40%' }">
+          <div class="textcenter">
+            <h4>{{this.text_name}}</h4>
+            <header>{{this.timeValue}}</header>
+          </div>
+          <van-datetime-picker
+            v-model="currentDate"
+            type="date"
+            :min-date="minDate"
+            :max-date="maxDate"
+            visible-item-count="3"
+            :show-toolbar="false"
+            :formatter="formatter"
+            @change="QT_confirmPicker"
+          />
+
+          <van-row type="flex" justify="space-around">
+            <van-col span="9">
+              <van-button round plain type="info" size="large" @click="showQT=false">取消</van-button>
+            </van-col>
+            <van-col span="9">
+              <van-button round plain type="info" size="large" @click="confirmTime">确定</van-button>
+            </van-col>
+          </van-row>
+        </van-popup>
+
+        <van-button round plain type="info" size="large" @click="del_plan">删除计划</van-button>
+      </div>
+    </van-popup>
+
+    <!-- 顶部 -->
+    <div>
+      <van-nav-bar title="预约待办" @click-right="onClickRight">
+        
+        <template #right>
+          <van-icon name="add-o" size="20px" />
+        </template>
+         <!--左上弹出-->
+        <template #left>
+          <van-icon name="wap-home" size="20px" @click="showLeft" />
           <van-popup v-model="showL" round position="left" :style="{height: '100%' ,width:'50%'}">
             <!--个人界面弹窗-->
             <div>
               <van-nav-bar>
                 <template #left>
-                  <van-icon name="arrow-left" size="22px" @click="hideshwoleft" />
+                  <van-icon name="arrow-left" size="20px" @click="hideshwoleft" />
                 </template>
               </van-nav-bar>
 
@@ -46,7 +281,7 @@
                   </template>
                 </van-cell>
 
-                <van-cell center title="我的牧场">
+                <van-cell center title="我的牧场" @click="GoNc"> 
                   <template #icon>
                     <van-icon name="point-gift" size="20px" />
                   </template>
@@ -67,215 +302,187 @@
             </div>
           </van-popup>
         </template>
-
-        <!--右上弹出-->
-        <template #right>
-          <van-icon name="plus" @click="showRight" />
-          <!--新建短期计划弹窗暂时舍弃-->
-          <!-- <van-popup v-model="showR" round position="bottom" :style="{ height: '30%' }">
-          </van-popup>-->
-
-          <!--新建短期计划上拉菜单-->
-          <van-action-sheet
-            v-model="showR"
-            :actions="actions"
-            cancel-text="确认"
-            @cancel="add_shortPlan"
-            :style="{ height: '30%' }"
-            description="新建短期计划"
-          >
-            <van-dropdown-menu overlay="false">
-              <van-dropdown-item v-model="value" :options="option" @close="clsoed_value" />
-            </van-dropdown-menu>
-
-            <van-cell-group>
-              <van-field v-model="short_name" placeholder="请输入计划" input-align="center" />
-            </van-cell-group>
-          </van-action-sheet>
-        </template>
       </van-nav-bar>
     </div>
-    <!--短期计划列表-->
+
+
+    <!-- 预约待办列表列表 -->
     <div>
-      <!-- <van-grid :gutter="10" :border="false" :column-num="4">
-        <van-grid-item>
-          <van-image
-            round
-            width="4rem"
-            height="4rem"
-            @click="set_time"
-            src="https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1586095355294&di=817277abc1bc0beeb6bd754e81fb38ec&imgtype=0&src=http%3A%2F%2Fpic.51yuansu.com%2Fpic3%2Fcover%2F01%2F10%2F16%2F59035b41b31f8_610.jpg"
-          />
-          <h6>专注</h6>
-        </van-grid-item>
-        <van-grid-item>
-          <van-image
-            round
-            width="4rem"
-            height="4rem"
-            @click="finish_plan"
-            src="https://ss3.bdstatic.com/70cFv8Sh_Q1YnxGkpoWK1HF6hhy/it/u=3280938643,1750635942&fm=26&gp=0.jpg"
-          />
-          <h6>饮水</h6>
-        </van-grid-item>
-        
-      </van-grid>-->
+        <van-list v-model="loading" :finished="finished" @load="onLoad" finished-text="没有更多了">
+          <div
+            v-for="(item,index) in shortlist"
+            :key="index"
+            @click="changeplanshow(index)"
+          >
+            <van-cell >
+              <template #icon>
+                <van-image
+                  round
+                  width="2.5rem"
+                  height="2.5rem"
+                  src="http://img3.imgtn.bdimg.com/it/u=3105721490,614407519&fm=26&gp=0.jpg"
+                />
+              </template>
+              <template #title>{{item.name}}</template>
 
-      <van-grid :gutter="10" :border="false" :column-num="4">
-        <van-grid-item v-for="(item,index) in shortlist" :key="index">
-          <van-list v-model="loading" :finished="finished" @load="onLoad" loading-text=" ">
-            <div
-              class="short_plan"
-              @touchstart.prevent="touchinUk(index)"
-              @touchend.prevent="cleartime(index)"
-            >
-              <van-image
-                round
-                width="4rem"
-                height="4rem"
-                @click="click_plan(index)"
-                :src="item.img"
-              />
-              <header>{{item.shortname}}</header>
-            </div>
-          </van-list>
-        </van-grid-item>
-      </van-grid>
-
-      <!-- 选择计时模式 -->
-      <div id="all">
-        <van-dialog v-model="show_text" title="计时模式" show-cancel-button :beforeClose="confirm_time" close-on-popstate=true>
-          <van-picker :columns="columns" visible-item-count="1" />
-
-          <van-datetime-picker
-            v-model="currentTime"
-            title="hour:minutes"
-            type="time"
-            :min-hour="0"
-            :min-minute="0"
-            :max-minute="60"
-            :max-hour="24"
-            :show-toolbar="true"
-            cancel-button-text=" "
-            confirm-button-text=" "
-            :item-height="20"
-            visible-item-count="2"
-          />
-          <!-- 删除计划原本按钮<van-button round type="info" plain @click="del_plan(index)">删除计划</van-button> -->
-        </van-dialog>
-      </div>
-
-      <!-- 是否多次打卡显示 -->
-      <div>
-        <van-dialog v-model="show_some" 
-        title="打卡次数" 
-        show-cancel-button 
-        confirmButtonText="多次" 
-        cancelButtonText="单次" 
-        @confirm="manyDK"
-        @cancel="onceDK"
-        >
-        </van-dialog>
-      </div>
-
+              <template #label>{{item.BeginTimeList}}-{{item.EndTimeList}}</template>
+            </van-cell>
+          </div>
+        </van-list>
     </div>
+
+    
   </div>
 </template>
 
 <style>
-.bar_sty {
-  background: #14c1bb;
-}
-.short_plan {
-  text-align: center;
-}
 </style>
 
 <script>
+import storage from "../store/listfucton.js";
 import Vue from "vue";
-import { Icon } from "vant";
-import { Dialog, Toast } from "vant";
-
-// 全局注册
-Vue.use(Dialog);
-
-Vue.use(Icon);
+import { Col, Row } from "vant";
+Vue.use(Col);
+Vue.use(Row);
 
 export default {
   data() {
     return {
-      //列表数据
+      //个人界面
+      showL:false,
+      //修改计划
+      showchange_plan: false,
+      plannumber: 0,
+      changename: "",
+    
+      //全天非全天计划显示
+      Fqt_show: true,
+      Qt_show: false,
+      show1: true,
+      show2: false,
+      show3: false,
+      //重复下拉菜单
+      CFshow: false,
+      CF_choice: "一次性任务",
+      CFvalue: 0, //重复 0一次性 1每天 2每周一至五
+      //输入框的值
+      valuename: "",
+      showFQT: false,
+      showQT: false,
+      checked: false,
+      showright: false,
+   
+      
+      //时间选择
+      minDate: new Date(),
+      maxDate: new Date(2025, 10, 1),
+      currentDate: new Date(),
+      timeValue: "",
+
+      BeginTimeValue: "",
+      EndTimeValue: "",
+      Begin_End: 0, //确认是开始还是结束时间的选择
+      text_name: "开始时间",
+      //列表
+      listdata: [
+        // {
+        //   // name:'早起',
+        //   // BeginTimeList:'2020-04-20 8:00',
+        //   // EndTtimeList:'2020-05-20 8:00',
+        //   // CFway:2,//0 1 2
+        // }
+      ],
+      datalistnum: 0,
+      
+      //预约待办计划原本shortlist
+      shortlist:[],
+      shortlistnum:0,
       loading: false,
       finished: false,
-      refreshing: false,
-      listnum: 5,
-      short_name: "",
-      image:
-        "https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1586859173525&di=2ed40c36ff895b36aa8eab69e683dfff&imgtype=0&src=http%3A%2F%2Fbpic.588ku.com%2Felement_origin_min_pic%2F01%2F19%2F91%2F84570bf4c1066fe.jpg",
-      shortlist: [
-        {
-          shortname: "专注",
-          DKway: 0, //0计时模式或1打卡模式
-          DKtime:1,//如果为打卡模式设置 0单次打卡 1多次打卡
-          img:
-            "https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1586095355294&di=817277abc1bc0beeb6bd754e81fb38ec&imgtype=0&src=http%3A%2F%2Fpic.51yuansu.com%2Fpic3%2Fcover%2F01%2F10%2F16%2F59035b41b31f8_610.jpg"
-        },
-        {
-          shortname: "放下手机",
-          DKway: 0,
-          DKtime:1,
-          img:
-            "https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1586095935255&di=c67ca46680933938cb37d357160b0a56&imgtype=0&src=http%3A%2F%2Fbpic.588ku.com%2Felement_origin_min_pic%2F01%2F19%2F52%2F29570b3549ece4d.jpg"
-        },
-        {
-          shortname: "吃药",
-          DKway: 1,
-          DKtime:1,
-          img:
-            "https://ss3.bdstatic.com/70cFv8Sh_Q1YnxGkpoWK1HF6hhy/it/u=153606762,3021730881&fm=15&gp=0.jpg"
-        },
-        {
-          shortname: "看书",
-          DKway: 0,
-          DKtime:1,
-          img:
-            "https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1586096266671&di=8401f2f6d76cd9b60cffb927b687d2ab&imgtype=0&src=http%3A%2F%2Fbpic.588ku.com%2Felement_origin_min_pic%2F01%2F19%2F48%2F39570b25ee4e848.jpg"
-        },
-        {
-          shortname: "吃水果",
-          DKway: 1,
-          DKtime:0,
-          img:
-            "https://ss0.bdstatic.com/70cFuHSh_Q1YnxGkpoWK1HF6hhy/it/u=3854818272,2588434238&fm=26&gp=0.jpg"
-        }
-      ],
-
-      //新建计划
-      show_some: false,
-      show_text: false,
-      showR: false,
-      showL: false,
-      value: 0,//模式的value
-      value_dk:0,//单多次打卡的value 0单 1多
-      option: [
-        { text: "计时模式", value: 0 },
-        { text: "打卡模式", value: 1 }
-      ],
-      columns: ["倒计时", "正计时"],
-      secondsTime: 0
     };
   },
 
+  created() {
+    this.date = this.date_get();
+    this.getTime();
+  },
+  mounted() {
+    this.get_listdata();
+
+    this.get_shortlist();
+    
+  },
   methods: {
-    //隐藏个人信息界面弹出
-    hideshwoleft() {
-      this.showL = false;
+
+  //列表排序
+  get_sort(list){
+    list.sort(function(a, b) {
+      return a.BeginTimeList > b.BeginTimeList;
+    });
+  },
+  //获取计划总表
+  get_listdata(){
+    var list = storage.get("listdata");
+    if (list) {
+      this.listdata = list;
+      this.datalistnum = storage.get("datalistnum");
+    }
+  },
+
+   //获取短期计划
+   get_shortlist(){
+     //先把当前的shortlist清空
+     this.shortlist=[];
+     this.shortlistnum=0;
+     //从计划总表listdata中获取短期计划
+     if(this.datalistnum!=0){
+       for(let i=0;i<this.datalistnum;i++){
+         var ba=this.listdata[i].BeginTimeList.split(" ");
+         var ea=this.listdata[i].EndTimeList.split(" ");
+         var now=this.date_get();
+         //满足条件持续一天内且计划时间不在过去
+         if(ba[0]==ea[0]&&ba[0]>=now){
+           this.shortlist.push(this.listdata[i]);
+           this.shortlistnum++;
+         }
+       }
+     };
+     //
+     this.get_sort(this.shortlist);
+     console.log(this.shortlist);
+     console.log("预约待办计划数"+this.shortlistnum);
+   },
+
+    // 预约待办计划列表
+    onLoad() {
+      //重新获取一遍shortlist数据
+      // var list=storage.get("shortlist");
+      // if(list){
+      //   this.shortlist=list;
+      //   this.shortlistnum=storage.get("shortlistnum");
+      // };
+      
+      setTimeout(() => {
+        for (
+          let i = 0;
+          i < this.shortlistnum && this.shortlist.length < this.shortlistnum;
+          i++
+        ) {
+          this.shortlist.push(this.shortlist.length + 1);
+        }
+        this.loading = false;
+
+        if (this.shortlist.length >= this.shortlistnum) {
+          this.finished = true;
+        }
+      }, 1000);
     },
-    showRight() {
-      this.showR = true;
-    },
+    //个人信息页展示隐藏
     showLeft() {
       this.showL = true;
+    },
+    hideshwoleft() {
+      this.showL = false;
     },
     //个人信息页的跳转
     GoSetting() {
@@ -293,189 +500,303 @@ export default {
     GoMylc(){
       this.$router.push({ path: "/mylc" });
     },
-  
-    //多次任务完成不删除
-    finish_Mplan() {
-      Dialog.confirm({
-        title: "打卡完成"
-      })
-        .then(() => {
-          // on confirm
-        })
-        .catch(() => {
-          // on cancel
-        });
-    },
-   //单次任务完成删除
-    finish_Oplan(index) {
-      Dialog.confirm({
-        title: "打卡完成"
-      })
-        .then(() => {
-          // on confirm
-          this.shortlist.splice(index, 1);
-        })
-        .catch(() => {
-          // on cancel
-        });
-        
-    },
-
-    set_time() {
-      this.show_text = true;
-    },
-
-    //时间转换成毫秒再上传到store
-    timeChange() {
-      var hms = this.currentTime; // your input string
-      var a = hms.split(":"); // split it at the colons
-      // minutes are worth 60 seconds. Hours are worth 60 minutes.
-      var seconds = +a[0] * 60 * 60 * 1000 + +a[1] * 60 * 1000;
-      this.secondsTime = seconds;
-      console.log(seconds);
-      console.log(this.secondsTime);
+    GoNc(){
+       this.$router.push({ path: "/threeView" }); 
     },
 
 
-    //设定时间后跳转到time界面
-    confirm_time(action, done) {
-      if (action == "confirm") {
-        done();
-        this.timeChange();
-        this.$store.commit("updataCurrentTime", this.secondsTime);
-        console.log(this.$store.state.currentTime);
-        this.$router.push({ path: "/timedown" });
-        done();
+    //时间选择修饰函数
+    formatter(type, value) {
+      if (type === "year") {
+        return `${value}年`;
+      } else if (type === "month") {
+        return `${value}月`;
+      } else if (type === "day") {
+        return `${value}日`;
+      } else if (type === "hour") {
+        return `${value}时`;
+      } else if (type === "minute") {
+        return `${value}分`;
+      } else if (type === "second") {
+        return `${value}秒`;
+      }
+      return value;
+    },
+
+    // 默认显示当前时间
+    getTime() {
+      let date = new Date();
+      console.log(date);
+      let y = date.getFullYear();
+      let m = date.getMonth() + 1;
+      let d = date.getDate();
+      let h = date.getHours();
+      let min = date.getMinutes();
+      // let s = date.getSeconds()
+      if (m >= 1 && m <= 9) {
+        m = `0${m}`;
+      }
+      if (d >= 1 && d <= 9) {
+        d = `0${d}`;
+      }
+      if (h >= 0 && h <= 9) {
+        h = `0${h}`;
+      }
+      if (min >= 0 && min <= 9) {
+        min = `0${min}`;
+      }
+      // if (s >= 0 && s <= 9) { min = `0${s}` }
+      let time = `${y}-${m}-${d} ${h}:${min}`;
+      this.timeValue = time;
+      this.BeginTimeValue = time;
+      this.EndTimeValue = time;
+    },
+
+    // 全天计划默认显示时间早上8点
+    QT_getTime() {
+      let date = new Date();
+      let y = date.getFullYear();
+      let m = date.getMonth() + 1;
+      let d = date.getDate();
+      // let s = date.getSeconds()
+      if (m >= 1 && m <= 9) {
+        m = `0${m}`;
+      }
+      if (d >= 1 && d <= 9) {
+        d = `0${d}`;
+      }
+      // if (s >= 0 && s <= 9) { min = `0${s}` }
+      let time = `${y}-${m}-${d} 08:00`;
+      this.timeValue = time;
+      this.BeginTimeValue = time;
+      this.EndTimeValue = time;
+    },
+
+    //改变选择之后的时间
+    confirmPicker() {
+      var val = this.currentDate;
+      let year = val.getFullYear();
+      let month = val.getMonth() + 1;
+      let day = val.getDate();
+      let hour = val.getHours();
+      let minute = val.getMinutes();
+      // let second = val.getSeconds()
+      if (month >= 1 && month <= 9) {
+        month = `0${month}`;
+      }
+      if (day >= 1 && day <= 9) {
+        day = `0${day}`;
+      }
+      if (hour >= 0 && hour <= 9) {
+        hour = `0${hour}`;
+      }
+      if (minute >= 0 && minute <= 9) {
+        minute = `0${minute}`;
+      }
+      // if (second >= 0 && second <= 9) { second = `0${second}` }
+      this.timeValue = `${year}-${month}-${day} ${hour}:${minute}`;
+      console.log(this.timeValue);
+    },
+
+    //改变选择之后的时间
+    QT_confirmPicker() {
+      var val = this.currentDate;
+      let year = val.getFullYear();
+      let month = val.getMonth() + 1;
+      let day = val.getDate();
+      // let second = val.getSeconds()
+      if (month >= 1 && month <= 9) {
+        month = `0${month}`;
+      }
+      if (day >= 1 && day <= 9) {
+        day = `0${day}`;
+      }
+      // if (second >= 0 && second <= 9) { second = `0${second}` }
+      this.timeValue = `${year}-${month}-${day} 08:00`;
+      console.log(this.timeValue);
+    },
+
+    //点击函数
+    onClickRight() {
+      this.showright = true;
+      this.getTime();
+      this.CFvalue = 0;
+    },
+    outadd() {
+      this.showright = false;
+      this.showchange_plan = false;
+    },
+
+    //开始结束时间选择
+    BeginChoiceTime() {
+      this.Begin_End = 0;
+      this.text_name = "开始时间";
+      if (this.checked == false) {
+        this.showFQT = true;
       } else {
-        done();
+        this.showQT = true;
       }
     },
-
-    //列表函数
-    onLoad() {
-      setTimeout(() => {
-        if (this.refreshing) {
-          this.shortlist = [];
-          this.refreshing = false;
-        }
-        for (
-          let i = 0;
-          i < this.listnum && this.shortlist.length < this.listnum;
-          i++
-        ) {
-          this.shortlist.push(this.shortlist.length + 1);
-        }
-        this.loading = false;
-
-        if (this.shortlist.length >= this.listnum) {
-          this.finished = true;
-        }
-      }, 1000);
-    },
-
-    //增加短期计划
-    add_shortPlan() {
-      //计时模式计划增加
-      console.log('打卡模式',this.value);
-      if (this.value == 0) {
-        this.shortlist.push({
-          shortname: this.short_name,
-          DKway: 0,
-          DKtime:1,
-          img: this.image
-        });
+    EndChoiceTime() {
+      this.Begin_End = 1;
+      this.text_name = "结束时间";
+      if (this.checked == false) {
+        this.showFQT = true;
       } else {
-
-        //单次打卡任务增加
-        if(this.value_dk==0){
-          this.shortlist.push({
-          shortname: this.short_name,
-          DKway: 1,
-          DKtime:0,
-          img: this.image
-        });
-        }else{
-          //多次打卡任务添加
-          this.shortlist.push({
-          shortname: this.short_name,
-          DKway: 1,
-          DKtime:1,
-          img: this.image
-        });
-        }
-
-      }
-      this.listnum++;
-      this.short_name = "";
-      this.value=0;
-    },
-
-    //单击计划弹出
-    click_plan(index) {
-      let plan = this.shortlist[index];
-      if (plan.DKway == 0) {
-        this.set_time();
-      } else {
-        if(plan.DKtime==1){
-          this.finish_Mplan();
-        }else{
-          this.finish_Oplan(index);
-        }
+        this.showQT = true;
       }
     },
-
-    //关闭下拉菜单后操作
-    clsoed_value() {
-      console.log(this.value);
-      if(this.value==1){
-        this.show_some = true;
-      };
-    },
-    manyDK(){
-      this.value_dk=1;
-    },
-    onceDK(){
-      this.value_dk=0;
-    },
-
-    //原本的删除按钮
-    // del_plan(index) {
-    //   this.show_text = false;
-    //   this.shortlist.splice(index, 1);
-    //   this.listnum--;
+    // choiceTime() {
+    //   this.showFQT = true;
     // },
 
-    //长按删除的实现
-    touchinUk(index) {
-      console.log(index);
-      clearInterval(this.Loop); //再次清空定时器，防止重复注册定时器
-      this.Loop = setTimeout(
-        function() {
-          this.Loop = 0;
-          this.$dialog
-            .confirm({
-              message: "是否删除计划"
-            })
-            .then(() => {
-              console.log("删除");
-              this.shortlist.splice(index, 1);
-              this.listnum--;
-            })
-            .catch(() => {
-              // on cancel
-              console.log("不删");
-            });
-        }.bind(this),
-        1000
-      );
-    },
-    cleartime(index) {
-      // 这个方法主要是用来将每次手指移出之后将计时器清零
-      clearInterval(this.Loop);
-      if (this.Loop != 0) {
-        this.click_plan(index);
+    //开始或结束时间确定
+    confirmTime() {
+      if (this.Begin_End == 0) {
+        this.BeginTimeValue = this.timeValue;
+        this.EndTimeValue = this.BeginTimeValue;
+        console.log(this.Begin_End);
+      } else {
+        this.EndTimeValue = this.timeValue;
       }
-    }
+      if (this.checked == false) {
+        this.showFQT = false;
+      } else {
+        this.showQT = false;
+      }
+    },
+    //重复选择
+    CFChoice() {
+      this.CFshow = true;
+    },
+    show1_choice() {
+      this.show1 = true;
+      this.show2 = false;
+      this.show3 = false;
+      this.CFshow = false;
+      this.CF_choice = "一次性任务";
+      this.CFvalue = 0;
+    },
+    show2_choice() {
+      this.show1 = false;
+      this.show2 = true;
+      this.show3 = false;
+      this.CFshow = false;
+      this.CF_choice = "每天";
+      this.CFvalue = 1;
+    },
+    show3_choice() {
+      this.show1 = false;
+      this.show2 = false;
+      this.show3 = true;
+      this.CFshow = false;
+      this.CF_choice = "每周(周一至周五)";
+      this.CFvalue = 2;
+    },
+
+    //全天计划
+    QTchange() {
+      console.log(this.checked);
+      if (this.checked == false) {
+        this.getTime();
+        this.Fqt_show = true;
+        this.Qt_show = false;
+      } else {
+        this.QT_getTime();
+        this.Fqt_show = false;
+        this.Qt_show = true;
+      }
+    },
+    //添加计划
+    addplan() {
+      console.log(1);
+      this.listdata.push({
+        name: this.valuename,
+        BeginTimeList: this.BeginTimeValue,
+        EndTimeList: this.EndTimeValue,
+        CFway: this.CFvalue,
+        detialtime:this.detial_time(),
+      });
+      storage.set("listdata", this.listdata);
+      this.showright = false;
+      this.datalistnum++;
+      storage.set("datalistnum", this.datalistnum);
+    
+      this.get_listdata();
+      this.get_shortlist();
+      this.onLoad();
+    },
+
+
+
+   //修改计划
+
+  //修改计划显示
+  changeplanshow(index) {
+      this.showchange_plan = true;
+      this.valuename = this.shortlist[index].name;
+      this.BeginTimeValue = this.shortlist[index].BeginTimeList;
+      this.EndTimeValue = this.shortlist[index].EndTimeList;
+      this.CFvalue = this.shortlist[index].CFway;
+      this.plannumber = index;
+      this.changename = this.shortlist[index].name;
+      this.changedetialtime=this.shortlist[index].detialtime;
+      console.log(this.changedetialtime);
+    },
+
+    //修改计划从todaylist和datalist中删除对应项目再添加新的修改
+    changeplan() {
+      this.del_plan();
+      this.addplan();
+    },
+
+
+    // 删除计划
+    del_plan() {
+      console.log("delete");
+      console.log(this.changedetialtime);
+      this.listdata = storage.get("listdata");
+      this.datalistnum = storage.get("datalistnum");
+      for (let i = 0; i < this.datalistnum; i++) {
+        if (this.listdata[i].detialtime == this.changedetialtime) {
+          this.listdata.splice(i, 1);
+          this.datalistnum--;
+          i--;
+          console.log("已从listdata删除");
+        }
+      };
+      storage.set("listdata", this.listdata);
+      storage.set("datalistnum", this.datalistnum);
+      // this.get_listdata();
+      this.get_shortlist();
+      this.onLoad();
+      // this.shortlist.splice(this.plannumber, 1);
+      // this.shortlistnum--;
+      this.showchange_plan = false;
+    },
+    //得到当前时间精确到日
+    date_get(){
+     let date = new Date();
+     console.log("lala"+date);
+     let y = date.getFullYear();
+     let m = date.getMonth() + 1;
+     let d = date.getDate();
+     // let s = date.getSeconds()
+     if (m >= 1 && m <= 9) {
+       m = `0${m}`;
+     }
+     if (d >= 1 && d <= 9) {
+       d = `0${d}`;
+     }
+     let time = `${y}-${m}-${d}`;
+     return time;
+    },
+    //得到当前时间精确到毫秒
+    detial_time(){
+      let date=new Date();
+      return date;
+    },
+    
   }
 };
 </script>

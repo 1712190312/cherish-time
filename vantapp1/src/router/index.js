@@ -18,6 +18,7 @@ import AddFView from '../views/AddF.vue'
 import FPlanView from '../views/FPlan.vue'
 import DetailsView from '../views/Details.vue'
 import PlanQView from '../views/PlanQ.vue'
+import threeViewView from '../views/threeView.vue'
 
 Vue.use(VueRouter)
 
@@ -49,7 +50,6 @@ const routes = [
   {
     path:"/max",
     component:maxView,
-    meta:{keepAlive: true}
   },
   {
     path:"/lunbo",
@@ -58,7 +58,6 @@ const routes = [
   {
     path:"/longitem",
     component:longitemView,
-    meta:{keepAlive: true}
   },
   {
     path:"/test",
@@ -103,6 +102,10 @@ const routes = [
   {
     path:"/PlanQ",
     component:PlanQView,
+  },
+  {
+    path:"/threeView",
+    component:threeViewView,
   },
 
 ]

@@ -55,7 +55,7 @@ export default {
       console.log("submit", values);
     },
     GoMax(){
-      this.$router.push({path:'/max'})
+      this.$router.push({path:'/test'})
     }
   }
 };

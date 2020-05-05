@@ -42,7 +42,7 @@ export default {
     var w = document.documentElement.clientWidth || document.body.clientWidth;
     this.screeHeight = h;
     this.screenWidth = w;
-    
+
     //每次使wave高度+1，每隔多少时间加1
     var t=this.$store.state.currentTime/h
     this.timeAdd=t;
@@ -152,10 +152,12 @@ export default {
     },
     finish() {
       Toast("倒计时结束");
-      this.$router.go(-1);
+      this.$store.commit("changePlan_finsh",1);
+      console.log("置1this.$store.state.plan_finsh:"+this.$store.state.plan_finsh);
+      this.$router.push({ path: "/test" });
     },
     goback(){
-       this.$router.go(-1);
+      this.$router.push({ path: "/test" });
     }
   }
 };
